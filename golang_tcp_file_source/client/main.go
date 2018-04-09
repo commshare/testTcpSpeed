@@ -15,7 +15,7 @@ import (
 	"github.com/dustin/go-humanize"
 	"math"
 )
-
+const TEN_M= 10*1024*1024 /*10M*/
 //Define the size of how big the chunks of data will be send each time
 const BUFFERSIZE = 1024
 
@@ -86,7 +86,14 @@ func sendFileToClient(connection net.Conn) {
 	SpeedMeter(reportCh, output) // Speedmeter on all connections
 	SpeedReporter(output, time.Second*1)
 	for {
-		_, err = file.Read(sendBuffer)
+		var numBytes int
+		/*It returns the number of bytes read and any error encountered.*/
+		numBytes, err = file.Read(sendBuffer)
+		/*发送太快会耗尽网卡资源 TODO */
+		if numBytes / TEN_M == 0 {
+			//fmt.Printf("wait 300 ms ....\n")
+			time.Sleep(time.Microsecond*300)
+		}
 		if err == io.EOF {
 			//End of file reached, break out of for loop
 			break
